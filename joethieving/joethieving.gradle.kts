@@ -1,5 +1,3 @@
-import ProjectVersions.openosrsVersion
-
 version = "1.1.0"
 
 project.extra["PluginName"] = "JoeThieving"

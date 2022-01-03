@@ -25,8 +25,8 @@
 
 rootProject.name = "joe-external-plugins"
 
-include(":ExtUtils")
 include(":JoeThieving")
+include(":ExtUtils")
 
 for (project in rootProject.children) {
     project.apply {

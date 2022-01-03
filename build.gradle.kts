@@ -13,6 +13,7 @@ plugins {
 project.extra["GithubUrl"] = "https://github.com/zeffirojoe/joe-external-plugins"
 
 apply<BootstrapPlugin>()
+apply<VersionPlugin>()
 
 subprojects {
     group = "com.openosrs.externals"
