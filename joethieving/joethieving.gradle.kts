@@ -6,17 +6,7 @@ project.extra["PluginName"] = "JoeThieving"
 project.extra["PluginDescription"] = "Joe's Thieving Plugin"
 
 dependencies {
-	annotationProcessor(Libraries.lombok)
-	annotationProcessor(Libraries.pf4j)
-
-	compileOnly("com.openosrs:runelite-api:$openosrsVersion+")
-	compileOnly("com.openosrs:runelite-client:$openosrsVersion+")
-	compileOnly("com.intellij:annotations:+@jar")
-
-	compileOnly(Libraries.guice)
-	compileOnly(Libraries.javax)
-	compileOnly(Libraries.lombok)
-	compileOnly(Libraries.pf4j)
+	implementation(project(":ExtUtils"))
 }
 
 tasks {
@@ -26,6 +16,7 @@ tasks {
 					"Plugin-Version" to project.version,
 					"Plugin-Id" to nameToId(project.extra["PluginName"] as String),
 					"Plugin-Provider" to project.extra["PluginProvider"],
+					"Plugin-Dependencies" to nameToId("extutils"),
 					"Plugin-Description" to project.extra["PluginDescription"],
 					"Plugin-License" to project.extra["PluginLicense"]
 			))
