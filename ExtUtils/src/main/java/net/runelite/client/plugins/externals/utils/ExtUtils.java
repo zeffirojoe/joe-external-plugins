@@ -5,29 +5,10 @@
  */
 package net.runelite.client.plugins.externals.utils;
 
-import java.awt.Dimension;
-import java.awt.Rectangle;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import org.jetbrains.annotations.Nullable;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.Client;
-import net.runelite.api.DecorativeObject;
-import net.runelite.api.GameObject;
-import net.runelite.api.GroundObject;
 import net.runelite.api.Point;
-import net.runelite.api.TileObject;
-import net.runelite.api.WallObject;
-import net.runelite.api.queries.DecorativeObjectQuery;
-import net.runelite.api.queries.GameObjectQuery;
-import net.runelite.api.queries.GroundObjectQuery;
-import net.runelite.api.queries.InventoryWidgetItemQuery;
-import net.runelite.api.queries.WallObjectQuery;
+import net.runelite.api.*;
+import net.runelite.api.queries.*;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.api.widgets.WidgetItem;
@@ -36,10 +17,20 @@ import net.runelite.client.plugins.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.pf4j.Extension;
 
+import org.jetbrains.annotations.Nullable;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 @Extension
 @PluginDescriptor(
-	name = "ExtUtils",
-	hidden = true
+		name = "ExtUtils",
+		hidden = true
 )
 @Slf4j
 @SuppressWarnings("unused")
@@ -67,6 +58,22 @@ public class ExtUtils extends Plugin
 	}
 
 	@Nullable
+	public NPC findNearestNPC(int... ids)
+	{
+		assert client.isClientThread();
+
+		if (client.getLocalPlayer() == null)
+		{
+			return null;
+		}
+
+		return new NPCQuery()
+				.idEquals(ids)
+				.result(client)
+				.nearestTo(client.getLocalPlayer());
+	}
+
+	@Nullable
 	public GameObject findNearestGameObject(int... ids)
 	{
 		assert client.isClientThread();
@@ -77,9 +84,9 @@ public class ExtUtils extends Plugin
 		}
 
 		return new GameObjectQuery()
-			.idEquals(ids)
-			.result(client)
-			.nearestTo(client.getLocalPlayer());
+				.idEquals(ids)
+				.result(client)
+				.nearestTo(client.getLocalPlayer());
 	}
 
 	@Nullable
@@ -93,9 +100,9 @@ public class ExtUtils extends Plugin
 		}
 
 		return new WallObjectQuery()
-			.idEquals(ids)
-			.result(client)
-			.nearestTo(client.getLocalPlayer());
+				.idEquals(ids)
+				.result(client)
+				.nearestTo(client.getLocalPlayer());
 	}
 
 	@Nullable
@@ -109,9 +116,9 @@ public class ExtUtils extends Plugin
 		}
 
 		return new DecorativeObjectQuery()
-			.idEquals(ids)
-			.result(client)
-			.nearestTo(client.getLocalPlayer());
+				.idEquals(ids)
+				.result(client)
+				.nearestTo(client.getLocalPlayer());
 	}
 
 	@Nullable
@@ -125,9 +132,9 @@ public class ExtUtils extends Plugin
 		}
 
 		return new GroundObjectQuery()
-			.idEquals(ids)
-			.result(client)
-			.nearestTo(client.getLocalPlayer());
+				.idEquals(ids)
+				.result(client)
+				.nearestTo(client.getLocalPlayer());
 	}
 
 	public List<GameObject> getGameObjects(int... ids)
@@ -140,9 +147,9 @@ public class ExtUtils extends Plugin
 		}
 
 		return new GameObjectQuery()
-			.idEquals(ids)
-			.result(client)
-			.list;
+				.idEquals(ids)
+				.result(client)
+				.list;
 	}
 
 	public List<WallObject> getWallObjects(int... ids)
@@ -155,9 +162,9 @@ public class ExtUtils extends Plugin
 		}
 
 		return new WallObjectQuery()
-			.idEquals(ids)
-			.result(client)
-			.list;
+				.idEquals(ids)
+				.result(client)
+				.list;
 	}
 
 	public List<DecorativeObject> getDecorObjects(int... ids)
@@ -170,9 +177,9 @@ public class ExtUtils extends Plugin
 		}
 
 		return new DecorativeObjectQuery()
-			.idEquals(ids)
-			.result(client)
-			.list;
+				.idEquals(ids)
+				.result(client)
+				.list;
 	}
 
 	public List<GroundObject> getGroundObjects(int... ids)
@@ -185,9 +192,9 @@ public class ExtUtils extends Plugin
 		}
 
 		return new GroundObjectQuery()
-			.idEquals(ids)
-			.result(client)
-			.list;
+				.idEquals(ids)
+				.result(client)
+				.list;
 	}
 
 	@Nullable
@@ -221,9 +228,9 @@ public class ExtUtils extends Plugin
 		assert client.isClientThread();
 
 		return new InventoryWidgetItemQuery()
-			.idEquals(itemIDs)
-			.result(client)
-			.list;
+				.idEquals(itemIDs)
+				.result(client)
+				.list;
 	}
 
 	public List<Widget> getEquippedItems(int[] itemIds)
@@ -253,10 +260,6 @@ public class ExtUtils extends Plugin
 					}
 				}
 			}
-		}
-		else
-		{
-
 		}
 
 		return equipped;
@@ -341,8 +344,8 @@ public class ExtUtils extends Plugin
 	private void keyEvent(int id, char key)
 	{
 		KeyEvent e = new KeyEvent(
-			client.getCanvas(), id, System.currentTimeMillis(),
-			0, KeyEvent.VK_UNDEFINED, key
+				client.getCanvas(), id, System.currentTimeMillis(),
+				0, KeyEvent.VK_UNDEFINED, key
 		);
 
 		client.getCanvas().dispatchEvent(e);
@@ -358,10 +361,17 @@ public class ExtUtils extends Plugin
 	{
 		assert !client.isClientThread();
 		Point point = getClickPoint(rectangle);
-		click(point);
+		try
+		{
+			click(point);
+		}
+		catch (Exception ignored)
+		{
+			//Just return it. Should never get hit anyway tbh.
+		}
 	}
 
-	public void click(Point p)
+	public void click(Point p) throws InterruptedException
 	{
 		assert !client.isClientThread();
 
@@ -372,11 +382,15 @@ public class ExtUtils extends Plugin
 			final double width = (stretched.width / real.getWidth());
 			final double height = (stretched.height / real.getHeight());
 			final Point point = new Point((int) (p.getX() * width), (int) (p.getY() * height));
+			mouseEvent(503, point);
+			Thread.sleep(getRandomIntBetweenRange(50, 200));
 			mouseEvent(501, point);
 			mouseEvent(502, point);
 			mouseEvent(500, point);
 			return;
 		}
+		mouseEvent(503, p);
+		Thread.sleep(getRandomIntBetweenRange(50, 200));
 		mouseEvent(501, p);
 		mouseEvent(502, p);
 		mouseEvent(500, p);
@@ -398,10 +412,10 @@ public class ExtUtils extends Plugin
 	private void mouseEvent(int id, @NotNull Point point)
 	{
 		MouseEvent e = new MouseEvent(
-			client.getCanvas(), id,
-			System.currentTimeMillis(),
-			0, point.getX(), point.getY(),
-			1, false, 1
+				client.getCanvas(), id,
+				System.currentTimeMillis(),
+				0, point.getX(), point.getY(),
+				1, false, 1
 		);
 
 		client.getCanvas().dispatchEvent(e);

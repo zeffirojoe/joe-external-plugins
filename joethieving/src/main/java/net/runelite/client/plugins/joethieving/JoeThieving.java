@@ -12,7 +12,7 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
-import net.runelite.client.plugins.joethieving.extutils.ExtUtils;
+import net.runelite.client.plugins.externals.utils.ExtUtils;
 import org.pf4j.Extension;
 
 import java.awt.*;
