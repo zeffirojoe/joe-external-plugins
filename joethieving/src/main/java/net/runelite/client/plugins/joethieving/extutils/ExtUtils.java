@@ -27,9 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import net.runelite.client.plugins.joeplugin.extutils.Spells;
-import net.runelite.client.plugins.joeplugin.extutils.PrayerMap;
-
 @Extension
 @PluginDescriptor(
 	name = "ExtUtils",

@@ -3,7 +3,7 @@
  * All rights reserved.
  * Licensed under GPL3, see LICENSE for the full scope.
  */
-package net.runelite.client.plugins.joeplugin.extutils;
+package net.runelite.client.plugins.joethieving.extutils;
 
 import com.google.common.collect.ImmutableMap;
 import lombok.AllArgsConstructor;
