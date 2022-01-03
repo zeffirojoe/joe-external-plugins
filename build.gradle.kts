@@ -10,6 +10,8 @@ plugins {
     checkstyle
 }
 
+project.extra["GithubUrl"] = "https://github.com/zeffirojoe/joe-external-plugins"
+
 apply<BootstrapPlugin>()
 
 subprojects {
@@ -17,6 +19,7 @@ subprojects {
 
     project.extra["PluginProvider"] = "zeffirojoe"
     project.extra["ProjectUrl"] = "https://github.com/zeffirojoe/joe-external-plugins"
+    project.extra["ProjectSupportUrl"] = ""
     project.extra["PluginLicense"] = "GNU General Public License v3.0"
 
     repositories {
