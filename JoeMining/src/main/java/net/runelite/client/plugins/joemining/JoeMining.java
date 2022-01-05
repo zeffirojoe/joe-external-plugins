@@ -1,11 +1,11 @@
-package net.runelite.client.plugins.joethieving;
+package net.runelite.client.plugins.joemining;
+
 import com.google.inject.Provides;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
-import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetItem;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -21,24 +21,24 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
 import static net.runelite.api.AnimationID.*;
-import static net.runelite.client.plugins.joethieving.JoeThievingConfig.PickPocketTarget;
-import static net.runelite.client.plugins.joethieving.JoeThievingConfig.Food;
+import net.runelite.client.plugins.joemining.JoeMiningConfig.ORE;
 
 
 @Extension
 @PluginDescriptor(
-		name = "Joe Thieving",
-		description = "Joe's Thieving Plugin",
+		name = "Joe Mining",
+		description = "Joe's Mining Plugin",
 		enabledByDefault = false,
-		tags = {"weed", "smoke", "cheat", "thieving"}
+		tags = {"weed", "smoke", "cheat", "mining"}
 )
 @Slf4j
-public class JoeThieving extends Plugin
+public class JoeMining extends Plugin
 {
 	// Injects our config
 	@Inject
-	private JoeThievingConfig config;
+	private JoeMiningConfig config;
 
 	//Inject Client to use
 	@Inject
@@ -54,21 +54,20 @@ public class JoeThieving extends Plugin
 
 	// Provides the config
 	@Provides
-	JoeThievingConfig provideConfig(ConfigManager configManager)
+	JoeMiningConfig provideConfig(ConfigManager configManager)
 	{
-		return configManager.getConfig(JoeThievingConfig.class);
+		return configManager.getConfig(JoeMiningConfig.class);
 	}
 
-	private static final int[] COIN_POUCHES =
-			{ItemID.COIN_POUCH, ItemID.COIN_POUCH_22522, ItemID.COIN_POUCH_22523, ItemID.COIN_POUCH_22524, ItemID.COIN_POUCH_22525, ItemID.COIN_POUCH_22526, ItemID.COIN_POUCH_22527, ItemID.COIN_POUCH_22528, ItemID.COIN_POUCH_22529, ItemID.COIN_POUCH_22530, ItemID.COIN_POUCH_22531, ItemID.COIN_POUCH_22532, ItemID.COIN_POUCH_22533, ItemID.COIN_POUCH_22534, ItemID.COIN_POUCH_22535, ItemID.COIN_POUCH_22536, ItemID.COIN_POUCH_22537, ItemID.COIN_POUCH_22538};
-
-	private static final Map<PickPocketTarget, int[]> TARGET_CHOICES = Map.ofEntries(
-			Map.entry(PickPocketTarget.FARMER, new int[]{NpcID.FARMER, NpcID.FARMER_3243}),
-			Map.entry(PickPocketTarget.KNIGHT, new int[]{NpcID.KNIGHT_OF_ARDOUGNE, NpcID.KNIGHT_OF_ARDOUGNE_3300, NpcID.KNIGHT_OF_ARDOUGNE_8799, NpcID.KNIGHT_OF_ARDOUGNE_8800, NpcID.KNIGHT_OF_ARDOUGNE_8801, NpcID.KNIGHT_OF_ARDOUGNE_8851, NpcID.KNIGHT_OF_ARDOUGNE_8852, NpcID.KNIGHT_OF_ARDOUGNE_8854, NpcID.KNIGHT_OF_ARDOUGNE_8855})
+//	private static final int[] COIN_POUCHES =
+//			{ItemID.COIN_POUCH, ItemID.COIN_POUCH_22522, ItemID.COIN_POUCH_22523, ItemID.COIN_POUCH_22524, ItemID.COIN_POUCH_22525, ItemID.COIN_POUCH_22526, ItemID.COIN_POUCH_22527, ItemID.COIN_POUCH_22528, ItemID.COIN_POUCH_22529, ItemID.COIN_POUCH_22530, ItemID.COIN_POUCH_22531, ItemID.COIN_POUCH_22532, ItemID.COIN_POUCH_22533, ItemID.COIN_POUCH_22534, ItemID.COIN_POUCH_22535, ItemID.COIN_POUCH_22536, ItemID.COIN_POUCH_22537, ItemID.COIN_POUCH_22538};
+//
+	private static final Map<ORE, int[]> ORE_CHOICE_TARGET = Map.ofEntries(
+			Map.entry(ORE.AMETHYST, new int[]{ObjectID.CRYSTALS, ObjectID.CRYSTALS_11389})
 	);
 
-	private static final Map<Food, int[]> FOOD_CHOICES = Map.ofEntries(
-			Map.entry(Food.MONKFISH, new int[]{ItemID.MONKFISH_20547, ItemID.MONKFISH})
+	private static final Map<ORE, int[]> ORE_CHOICES_INV = Map.ofEntries(
+			Map.entry(ORE.AMETHYST, new int[]{ ItemID.AMETHYST})
 	);
 
 
@@ -90,12 +89,9 @@ public class JoeThieving extends Plugin
 	private WorldPoint lastPosition;
 	private boolean notifyPosition = false;
 	private boolean notifyIdleLogout = true;
-	private boolean notify6HourLogout = true;
 	private int lastCombatCountdown = 0;
 	private Instant sixHourWarningTime;
 	private boolean ready;
-	private boolean lastInteractWasCombat;
-	private boolean notifyHitpoints = true;
 
 	@Override
 	protected void startUp() throws Exception
@@ -335,6 +331,7 @@ public class JoeThieving extends Plugin
 		final NPCComposition npcComposition = npc.getComposition();
 		final List<String> npcMenuActions = Arrays.asList(npcComposition.getActions());
 
+		boolean lastInteractWasCombat;
 		if (npcMenuActions.contains("Attack"))
 		{
 			// Player is most likely in combat with attack-able NPC
@@ -424,7 +421,7 @@ public class JoeThieving extends Plugin
 
 		if (client.getGameState() != GameState.LOGGED_IN
 				|| local == null
-				|| !config.getPickpocketActive())
+				|| !config.getMiningActive())
 		{
 			resetTimers();
 			return;
@@ -432,20 +429,55 @@ public class JoeThieving extends Plugin
 
 		if (checkIdleLogout())
 		{
-			pickpocket();
+			mining();
 		}
 		if (checkAnimationIdle(waitDuration, local))
 		{
-			pickpocket();
+			mining();
 		}
 		if (checkMovementIdle(waitDuration, local))
 		{
-			pickpocket();
+			mining();
 		}
 		if (checkInteractionIdle(waitDuration, local))
 		{
-			pickpocket();
+			mining();
 		}
+	}
+
+	private void mining()
+	{
+		if (checkInvFull())
+		{
+			if (config.getBankOre())
+			{
+				//Will probably be hard to do. Not sure if worth
+			}
+			else
+			{
+				//If i want to have it drop the ores.
+				//Otherwise this can just be a placeholder for the user to drop or bank their own ores
+			}
+			return; //So we don't keep clicking shit if the inventory is full
+		}
+
+		int[] ore_ids = ORE_CHOICE_TARGET.get(config.getSelectedOre());
+		if (ore_ids != null)
+		{
+			clickWallObject(ore_ids);
+		}
+	}
+
+	private boolean checkInvFull()
+	{
+		final ItemContainer itemContainer = client.getItemContainer(InventoryID.INVENTORY);
+
+		if (itemContainer == null)
+			return false;
+
+		final Item[] items = itemContainer.getItems();
+
+		return items.length >= 28;
 	}
 
 	private boolean checkInteractionIdle(Duration waitDuration, Player local)
@@ -581,27 +613,6 @@ public class JoeThieving extends Plugin
 		return false;
 	}
 
-	private boolean checkLowHitpoints()
-	{
-		if (client.getRealSkillLevel(Skill.HITPOINTS) > config.getHitpointsThreshold())
-		{
-			if (client.getBoostedSkillLevel(Skill.HITPOINTS) + client.getVar(Varbits.NMZ_ABSORPTION) <= config.getHitpointsThreshold())
-			{
-				if (!notifyHitpoints)
-				{
-					notifyHitpoints = true;
-					return true;
-				}
-			}
-			else
-			{
-				notifyHitpoints = false;
-			}
-		}
-
-		return false;
-	}
-
 	private void resetTimers()
 	{
 		final Player local = client.getLocalPlayer();
@@ -619,63 +630,6 @@ public class JoeThieving extends Plugin
 		{
 			lastInteract = null;
 		}
-	}
-
-	private void pickpocket()
-	{
-		if (config.getDodgyNecklace())
-		{
-			if (checkNeedNewDodgy())
-			{
-				clickInvItem(new int[ItemID.DODGY_NECKLACE]);
-			}
-		}
-
-		if (config.getHitpointsChecker())
-		{
-			if (checkLowHitpoints())
-			{
-				int[] food_choice = FOOD_CHOICES.get(config.getFoodChoice());
-				if (food_choice != null)
-				{
-					clickInvItem(food_choice);
-				}
-			}
-		}
-
-		if (checkCoinPouch())
-		{
-			clickInvItem(COIN_POUCHES);
-		}
-
-		int[] npc_ids = TARGET_CHOICES.get(config.getPickpocketTarget());
-		if (npc_ids != null)
-		{
-			clickNPC(npc_ids);
-		}
-	}
-
-	private boolean checkNeedNewDodgy()
-	{
-		List<Widget> items = extUtils.getEquippedItems(new int[ItemID.DODGY_NECKLACE]);
-		if (items != null)
-		{
-			return items.size() < 1;
-		}
-		return false;
-	}
-
-	private boolean checkCoinPouch()
-	{
-		List<WidgetItem> items = extUtils.getItems(COIN_POUCHES);
-		if (items == null)
-			return false;
-
-		WidgetItem coin_pouch = items.get(0);
-		if (coin_pouch == null)
-			return false;
-
-		return coin_pouch.getQuantity() >= 28;
 	}
 
 	private void clickInvItem(int[] ITEM_IDS)
@@ -731,5 +685,34 @@ public class JoeThieving extends Plugin
 			extUtils.click(npc_rect);
 		})).start();
 	}
+
+
+	private void clickWallObject(int[] WALL_IDS)
+	{
+		WallObject near_wall_obj = extUtils.findNearestWallObject(WALL_IDS); //Change this to Ardy Knights
+		if (near_wall_obj == null)
+			return;
+
+		Shape npc_shape = near_wall_obj.getConvexHull();
+		if (npc_shape == null)
+			return;
+
+		Rectangle npc_rect = npc_shape.getBounds();
+		if (npc_rect == null)
+			return;
+
+		(new Thread(() -> {
+			try
+			{
+				Thread.sleep(extUtils.getRandomIntBetweenRange(142, 523));
+			}
+			catch (InterruptedException e)
+			{
+				e.printStackTrace();
+			}
+			extUtils.click(npc_rect);
+		})).start();
+	}
+
 
 }
