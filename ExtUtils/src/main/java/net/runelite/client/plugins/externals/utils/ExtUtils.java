@@ -317,6 +317,99 @@ public class ExtUtils extends Plugin
 		assert client.isClientThread();
 		return client.getWidget(PrayerMap.getWidget(spell));
 	}
+	/*
+	Series of Functions that click specific things in the world.
+	 */
+
+	//Clicks the first item that matches the ID in user INV
+	private void clickInvItem(int[] ITEM_IDS)
+	{
+		assert client.isClientThread();
+
+		List<WidgetItem> items = getItems(ITEM_IDS);
+		if (items == null)
+			return;
+
+		WidgetItem coin_pouch = items.get(0);
+		if (coin_pouch == null)
+			return;
+
+		Rectangle coin_pouch_rect = coin_pouch.getCanvasBounds();
+		if (coin_pouch_rect == null)
+			return;
+
+		(new Thread(() -> {
+			try
+			{
+				Thread.sleep(getRandomIntBetweenRange(142, 420));
+				click(coin_pouch_rect);
+			}
+			catch (InterruptedException e)
+			{
+				e.printStackTrace();
+			}
+		})).start();
+	}
+
+	//Clicks the closest IP that matches the id's given
+	private void clickNPC(int[] NPC_IDS)
+	{
+		assert client.isClientThread();
+
+		NPC pickpocket_npc = findNearestNPC(NPC_IDS); //Change this to Ardy Knights
+		if (pickpocket_npc == null)
+			return;
+
+		Shape npc_shape = pickpocket_npc.getConvexHull();
+		if (npc_shape == null)
+			return;
+
+		Rectangle npc_rect = npc_shape.getBounds();
+		if (npc_rect == null)
+			return;
+
+		(new Thread(() -> {
+			try
+			{
+				Thread.sleep(getRandomIntBetweenRange(142, 523));
+				click(npc_rect);
+			}
+			catch (InterruptedException e)
+			{
+				e.printStackTrace();
+			}
+		})).start();
+	}
+
+	//clicks the closest wall object that matches the IDS given
+	private void clickWallObject(int[] WALL_IDS)
+	{
+		assert client.isClientThread();
+
+		WallObject near_wall_obj = findNearestWallObject(WALL_IDS); //Change this to Ardy Knights
+		if (near_wall_obj == null)
+			return;
+
+		Shape npc_shape = near_wall_obj.getConvexHull();
+		if (npc_shape == null)
+			return;
+
+		Rectangle npc_rect = npc_shape.getBounds();
+		if (npc_rect == null)
+			return;
+
+		(new Thread(() -> {
+			try
+			{
+				Thread.sleep(getRandomIntBetweenRange(142, 523));
+				click(npc_rect);
+			}
+			catch (InterruptedException e)
+			{
+				e.printStackTrace();
+			}
+		})).start();
+	}
 
 	/**
 	 * This method must be called on a new

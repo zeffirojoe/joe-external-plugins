@@ -692,7 +692,6 @@ public class JoeMining extends Plugin
 		})).start();
 	}
 
-
 	private void clickWallObject(int[] WALL_IDS)
 	{
 		WallObject near_wall_obj = extUtils.findNearestWallObject(WALL_IDS); //Change this to Ardy Knights
@@ -719,6 +718,4 @@ public class JoeMining extends Plugin
 			extUtils.click(npc_rect);
 		})).start();
 	}
-
-
 }
