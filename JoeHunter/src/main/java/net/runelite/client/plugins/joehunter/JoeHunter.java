@@ -1,5 +1,4 @@
-package net.runelite.client.plugins.joemining;
-
+package net.runelite.client.plugins.joehunter;
 import com.google.inject.Provides;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -7,39 +6,39 @@ import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
 import net.runelite.api.widgets.WidgetItem;
-import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.externals.utils.ExtUtils;
+import net.runelite.client.plugins.groundmarkers.GroundMarkerPlugin;
 import org.pf4j.Extension;
 
 import java.awt.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-
+//import java.util.Map;
 import static net.runelite.api.AnimationID.*;
-import net.runelite.client.plugins.joemining.JoeMiningConfig.ORE;
+//import static net.runelite.client.plugins.joehunter.JoeHunterConfig.HunterTarget;
 
 
 @Extension
 @PluginDescriptor(
-		name = "Joe Mining",
-		description = "Joe's Mining Plugin",
+		name = "Joe Hunter",
+		description = "Joe's Hunter Plugin",
 		enabledByDefault = false,
-		tags = {"weed", "smoke", "cheat", "mining"}
+		tags = {"weed", "smoke", "cheat", "hunter"}
 )
 @Slf4j
-public class JoeMining extends Plugin
+public class JoeHunter extends Plugin
 {
 	// Injects our config
 	@Inject
-	private JoeMiningConfig config;
+	private JoeHunterConfig config;
 
 	//Inject Client to use
 	@Inject
@@ -53,27 +52,27 @@ public class JoeMining extends Plugin
 	@Inject
 	private ExtUtils extUtils;
 
-	//Notifier
+	//ExtUtils such as clicking and grabbing info
 	@Inject
-	private Notifier notifier;
+	private GroundMarkerPlugin groundMarkerPlugin;
 
 	// Provides the config
 	@Provides
-	JoeMiningConfig provideConfig(ConfigManager configManager)
+	JoeHunterConfig provideConfig(ConfigManager configManager)
 	{
-		return configManager.getConfig(JoeMiningConfig.class);
+		return configManager.getConfig(JoeHunterConfig.class);
 	}
 
 //	private static final int[] COIN_POUCHES =
 //			{ItemID.COIN_POUCH, ItemID.COIN_POUCH_22522, ItemID.COIN_POUCH_22523, ItemID.COIN_POUCH_22524, ItemID.COIN_POUCH_22525, ItemID.COIN_POUCH_22526, ItemID.COIN_POUCH_22527, ItemID.COIN_POUCH_22528, ItemID.COIN_POUCH_22529, ItemID.COIN_POUCH_22530, ItemID.COIN_POUCH_22531, ItemID.COIN_POUCH_22532, ItemID.COIN_POUCH_22533, ItemID.COIN_POUCH_22534, ItemID.COIN_POUCH_22535, ItemID.COIN_POUCH_22536, ItemID.COIN_POUCH_22537, ItemID.COIN_POUCH_22538};
 //
-	private static final Map<ORE, int[]> ORE_CHOICE_TARGET = Map.ofEntries(
-			Map.entry(ORE.AMETHYST, new int[]{ObjectID.CRYSTALS, ObjectID.CRYSTALS_11389})
-	);
-
-	private static final Map<ORE, int[]> ORE_CHOICES_INV = Map.ofEntries(
-			Map.entry(ORE.AMETHYST, new int[]{ ItemID.AMETHYST})
-	);
+//	private static final Map<HunterTarget, int[]> TARGET_CHOICES = Map.ofEntries(
+//			Map.entry(HunterTarget.RED_CHINS, new int[]{NpcID.FARMER, NpcID.FARMER_3243})
+//	);
+//
+//	private static final Map<Food, int[]> FOOD_CHOICES = Map.ofEntries(
+//			Map.entry(Food.MONKFISH, new int[]{ItemID.MONKFISH_20547, ItemID.MONKFISH})
+//	);
 
 
 	private static final int LOGOUT_WARNING_MILLIS = (4 * 60 + 40) * 1000; // 4 minutes and 40 seconds
@@ -94,9 +93,12 @@ public class JoeMining extends Plugin
 	private WorldPoint lastPosition;
 	private boolean notifyPosition = false;
 	private boolean notifyIdleLogout = true;
+	private boolean notify6HourLogout = true;
 	private int lastCombatCountdown = 0;
 	private Instant sixHourWarningTime;
 	private boolean ready;
+	private boolean lastInteractWasCombat;
+	private boolean notifyHitpoints = true;
 
 	@Override
 	protected void startUp() throws Exception
@@ -336,7 +338,6 @@ public class JoeMining extends Plugin
 		final NPCComposition npcComposition = npc.getComposition();
 		final List<String> npcMenuActions = Arrays.asList(npcComposition.getActions());
 
-		boolean lastInteractWasCombat;
 		if (npcMenuActions.contains("Attack"))
 		{
 			// Player is most likely in combat with attack-able NPC
@@ -426,7 +427,7 @@ public class JoeMining extends Plugin
 
 		if (client.getGameState() != GameState.LOGGED_IN
 				|| local == null
-				|| !config.getMiningActive())
+				|| !config.getHunterActive())
 		{
 			resetTimers();
 			return;
@@ -434,56 +435,48 @@ public class JoeMining extends Plugin
 
 		if (checkIdleLogout())
 		{
-			mining();
+			Hunter();
 		}
 		if (checkAnimationIdle(waitDuration, local))
 		{
-			mining();
+			Hunter();
 		}
 		if (checkMovementIdle(waitDuration, local))
 		{
-			mining();
+			Hunter();
 		}
 		if (checkInteractionIdle(waitDuration, local))
 		{
-			mining();
+			Hunter();
 		}
 	}
 
-	private void mining()
+	private void Hunter()
 	{
-		if (checkInvFull())
-		{
-			if (config.getBankOre())
-			{
-				//Will probably be hard to do. Not sure if worth
-			}
-			else
-			{
-				//If i want to have it drop the ores.
-				//Otherwise this can just be a placeholder for the user to drop or bank their own ores
-			}
-			notifier.notify("Inventory Full");
-			return; //So we don't keep clicking shit if the inventory is full
-		}
-
-		int[] ore_ids = ORE_CHOICE_TARGET.get(config.getSelectedOre());
-		if (ore_ids != null)
-		{
-			clickWallObject(ore_ids);
-		}
-	}
-
-	private boolean checkInvFull()
-	{
-		final ItemContainer itemContainer = client.getItemContainer(InventoryID.INVENTORY);
-
-		if (itemContainer == null)
-			return false;
-
-		final Item[] items = itemContainer.getItems();
-
-		return items.length >= 28;
+		//final Collection<ColorTileMarker> points = client.getScene()..
+//		if (points.isEmpty())
+//		{
+//			return null;
+//		}
+//
+//		Stroke stroke = new BasicStroke((float) config.borderWidth());
+//		for (final ColorTileMarker point : points)
+//		{
+//			WorldPoint worldPoint = point.getWorldPoint();
+//			if (worldPoint.getPlane() != client.getPlane())
+//			{
+//				continue;
+//			}
+//
+//			Color tileColor = point.getColor();
+//			if (tileColor == null || !config.rememberTileColors())
+//			{
+//				// If this is an old tile which has no color, or rememberTileColors is off, use marker color
+//				tileColor = config.markerColor();
+//			}
+//
+//			drawTile(graphics, worldPoint, tileColor, point.getLabel(), stroke);
+//		}
 	}
 
 	private boolean checkInteractionIdle(Duration waitDuration, Player local)
@@ -691,34 +684,5 @@ public class JoeMining extends Plugin
 			extUtils.click(npc_rect);
 		})).start();
 	}
-
-
-	private void clickWallObject(int[] WALL_IDS)
-	{
-		WallObject near_wall_obj = extUtils.findNearestWallObject(WALL_IDS); //Change this to Ardy Knights
-		if (near_wall_obj == null)
-			return;
-
-		Shape npc_shape = near_wall_obj.getConvexHull();
-		if (npc_shape == null)
-			return;
-
-		Rectangle npc_rect = npc_shape.getBounds();
-		if (npc_rect == null)
-			return;
-
-		(new Thread(() -> {
-			try
-			{
-				Thread.sleep(extUtils.getRandomIntBetweenRange(142, 523));
-			}
-			catch (InterruptedException e)
-			{
-				e.printStackTrace();
-			}
-			extUtils.click(npc_rect);
-		})).start();
-	}
-
 
 }
