@@ -463,8 +463,8 @@ public class JoeMining extends Plugin
 				//If i want to have it drop the ores.
 				//Otherwise this can just be a placeholder for the user to drop or bank their own ores
 			}
-			notifier.notify("Inventory Full");
-			return; //So we don't keep clicking shit if the inventory is full
+//			notifier.notify("Inventory Full");
+//			return; //So we don't keep clicking shit if the inventory is full
 		}
 
 		int[] ore_ids = ORE_CHOICE_TARGET.get(config.getSelectedOre());
